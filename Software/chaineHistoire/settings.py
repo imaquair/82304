@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-t)0z7098(h1o2md(astqpk#n1a-hmidis%z!41#m)qbicb13ge
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -54,7 +54,7 @@ ROOT_URLCONF = "chaineHistoire.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "chaineHistoire" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
