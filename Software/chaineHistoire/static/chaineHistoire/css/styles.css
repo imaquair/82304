@@ -18,3 +18,45 @@
 .home_buttons a:hover {
     background-color: #d9d9d9;
 }
+
+/* Create a story styles */
+.create_story_body {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.create_story_body form {
+    width: 500px;
+    overflow: hidden;
+}
+.create_story_body label {
+    float: left;
+    padding-right: 10px;
+}
+.create_story_body input[type="text"] {
+    width: 100%;
+}
+
+.create_story_body textarea {
+    width: 99%;
+    resize: none;
+}
+
+.create_story_body span {
+    display: block;
+    overflow: hidden;
+    padding-right: 10px;
+}
+.create_story_body button, input[type="submit"] {
+    float: right;
+    padding: 1rem;
+    background-color: #e9e9e9;
+    border: none;
+    text-decoration: none;
+    color: black;
+}
+.create_story_body button:hover, input[type="submit"]:hover {
+    background-color: #d9d9d9;
+}
