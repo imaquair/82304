@@ -8,6 +8,13 @@
     <title>Chaine d'Histoires</title>
 </head>
 <body>
+    {% if messages %}
+    <ul class="flash-messages">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     <div class="home_buttons">
         <a href="/create">Create new story</a>
         <a href="/add">Add to a story</a>
