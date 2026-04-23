@@ -23,7 +23,15 @@ from django.urls import path
 def home(request):
     return render(request, "base.html")
 
+def create_new_story(request):
+    return render(request, "create_story.html")
+
+def add_to_story(request):
+    return render(request, "add_to_story.html")
+
 urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
+    path("create/", create_new_story, name="create"),
+    path("add/", add_to_story, name="add"),
 ]
