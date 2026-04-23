@@ -15,23 +15,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from django.conf import settings
+from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path
+
+from backend import views as backend_views
 
 
 def home(request):
     return render(request, "base.html")
 
-def create_new_story(request):
-    return render(request, "create_story.html")
 
 def add_to_story(request):
     return render(request, "add_to_story.html")
 
+
 urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
-    path("create/", create_new_story, name="create"),
+    path("create/", backend_views.create_story, name="create"),
     path("add/", add_to_story, name="add"),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
