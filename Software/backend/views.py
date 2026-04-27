@@ -35,7 +35,7 @@ def create_story(request):
                 {
                     "errors": errors,
                     "title": title,
-                    "language": language,
+                    "language": language.capitalize(),
                     "english_text": english_text,
                 },
             )
@@ -51,7 +51,7 @@ def create_story(request):
             story=story,
             audio_file=audio,
             order=1,
-            language=language[:50],
+            language=language[:50].capitalize(),
             transcript_original=english_text,
             transcript_english=english_text
         )
@@ -136,7 +136,7 @@ def add_to_story(request, pk):
                 {
                     "story": story,
                     "errors": errors,
-                    "language": language,
+                    "language": language.capitalize(),
                     "english_text": english_text,
                 },
             )
@@ -146,7 +146,7 @@ def add_to_story(request, pk):
         recording_payload = {
             "story": story,
             "order": next_order,
-            "language": language[:50],
+            "language": language[:50].capitalize(),
             "transcript_original": english_text,
             "transcript_english": english_text,
         }

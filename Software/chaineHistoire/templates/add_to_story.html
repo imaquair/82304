@@ -10,7 +10,7 @@
 </head>
 <body>
     <div class="create_story_body">
-        <h1>Add to "{{ story.title }}"</h1>
+        <h1 class="font-family: 'Times New Roman', Times, serif;">Add to "{{ story.title }}"</h1>
         <p class="previous_story_text">{{ story.recordings.last.transcript_english|default:"No previous text yet." }}</p>
         <p class="previous_story_text">
             Keywords<br><br>
@@ -61,7 +61,7 @@
                 </div>
             </span><br><br>
 
-            <a href="/"><span class="material-symbols-outlined">arrow_back</span></a>
+            <a href="{% url 'library' %}"><span class="material-symbols-outlined">arrow_back</span></a>
             <input type="submit" value="Submit">
         </form>
     </div>

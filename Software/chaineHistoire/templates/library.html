@@ -12,11 +12,20 @@
     <div class="create_story_body">
         <h1>The Story Library</h1>
         {% if stories %}
-            <ul>
+            <div class="library-grid">
             {% for story in stories %}
-                <li><a href="{% url 'add' story.pk %}">{{ story.title }}</a></li>
+                <a href="{% url 'add' story.pk %}">
+                    <div>
+                        <h2>{{ story.title }}</h2>
+                        {{ story.recordings.last.transcript_english }}
+                    </div>
+                    <br>
+                    <div class="language-callout">
+                        {{ story.recordings.last.language }}
+                    </div>
+                </a>
             {% endfor %}
-            </ul>
+            </div>
         {% else %}
             <p>No stories yet</p>
         {% endif %}
