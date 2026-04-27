@@ -10,21 +10,148 @@
 </head>
 <body>
     <div class="create_story_body">
-        <h1>Add to a Story</h1>
-        <p class="previous_story_text">Previous text</p>
-        <form>
-            <label for="language">Language</label>
-            <span><input type="text" name="text"/></span><br><br>
+        <h1>Add to "{{ story.title }}"</h1>
+        <p class="previous_story_text">{{ story.recordings.last.transcript_english|default:"No previous text yet." }}</p>
+        {% if errors %}
+        <ul class="form-errors">
+            {% for err in errors %}
+            <li>{{ err }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        <form id="add-to-story-form" method="post" action="{% url 'add' story.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="file" name="audio" id="audio-file-input" class="visually-hidden" accept="audio/*,.webm,.mp4" tabindex="-1" aria-hidden="true" />
 
-            <label for="text">Add Text or </label>
-            <label for="record"> 
-                <input type="button" value="Record">
-            </label><br><br><br>
-            <textarea name="text" placeholder="Type to start story" rows="3" cols="100" maxlength="200"></textarea><br><br>
+            <label for="language">Language</label>
+            <span><input type="text" name="language" id="language" value="{{ language|default:'' }}" required maxlength="50" /></span><br><br>
+
+            <div class="create-inline-record-row">
+                <span class="create-inline-record-label" id="add-text-label">Add Text or</span>
+                <button type="button" class="create-inline-btn" id="btn-record">Record</button>
+                <div id="record-controls" class="create-record-controls is-hidden" aria-hidden="true">
+                    <button type="button" class="create-inline-btn" id="btn-start-recording">Start recording</button>
+                    <button type="button" class="create-inline-btn" id="btn-end-recording" disabled>End recording</button>
+                </div>
+                <p id="recording_text">Recording...</p>
+            </div>
+            <audio id="playback" class="create-playback" controls playsinline hidden></audio>
+            <br><br>
+            <textarea name="english_text" id="english_text" placeholder="Type to start story" rows="3" cols="100" maxlength="200">{{ english_text|default:'' }}</textarea><br><br>
 
             <a href="/"><span class="material-symbols-outlined">arrow_back</span></a>
             <input type="submit" value="Submit">
         </form>
     </div>
+
+    <script>
+    (function () {
+        var form = document.getElementById("add-to-story-form");
+        var btnRecord = document.getElementById("btn-record");
+        var recordControls = document.getElementById("record-controls");
+        var btnStart = document.getElementById("btn-start-recording");
+        var btnEnd = document.getElementById("btn-end-recording");
+        var audioFileInput = document.getElementById("audio-file-input");
+        var playback = document.getElementById("playback");
+        var playbackObjectUrl = null;
+        var recording_text = document.getElementById("recording_text");
+
+        var mediaRecorder = null;
+        var chunks = [];
+        var recordedBlob = null;
+        var mimeType = "audio/webm";
+        var pendingFormSubmit = false;
+
+        var canRecord = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+
+        btnRecord.addEventListener("click", function () {
+            if (!canRecord) {
+                alert("Recording is not supported in this browser.");
+                return;
+            }
+            recordControls.classList.remove("is-hidden");
+            recordControls.setAttribute("aria-hidden", "false");
+        });
+
+        btnStart.addEventListener("click", function () {
+            chunks = [];
+            recordedBlob = null;
+            audioFileInput.value = "";
+            if (playbackObjectUrl) {
+                URL.revokeObjectURL(playbackObjectUrl);
+                playbackObjectUrl = null;
+            }
+            playback.removeAttribute("src");
+            playback.hidden = true;
+            var options = {};
+            if (window.MediaRecorder && MediaRecorder.isTypeSupported("audio/webm")) {
+                options.mimeType = "audio/webm";
+                mimeType = "audio/webm";
+            } else if (window.MediaRecorder && MediaRecorder.isTypeSupported("audio/mp4")) {
+                options.mimeType = "audio/mp4";
+                mimeType = "audio/mp4";
+            }
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+                mediaRecorder = new MediaRecorder(stream, options);
+                mediaRecorder.ondataavailable = function (e) {
+                    if (e.data && e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
+                };
+                mediaRecorder.onstop = function () {
+                    stream.getTracks().forEach(function (t) { t.stop(); });
+                    recordedBlob = new Blob(chunks, { type: mimeType });
+                    if (playbackObjectUrl) {
+                        URL.revokeObjectURL(playbackObjectUrl);
+                    }
+                    playbackObjectUrl = URL.createObjectURL(recordedBlob);
+                    playback.src = playbackObjectUrl;
+                    playback.hidden = false;
+                    playback.style.display = "block";
+                    btnStart.disabled = false;
+                    btnEnd.disabled = true;
+                    recording_text.style.display = "none";
+                    if (pendingFormSubmit) {
+                        pendingFormSubmit = false;
+                        form.requestSubmit();
+                    }
+                };
+                mediaRecorder.start();
+                btnStart.disabled = true;
+                recording_text.style.display = "block";
+                btnEnd.disabled = false;
+            }).catch(function (err) {
+                alert("Could not use the microphone: " + (err.message || String(err)));
+            });
+        });
+
+        btnEnd.addEventListener("click", function () {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+            }
+        });
+
+        form.addEventListener("submit", function (e) {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                e.preventDefault();
+                pendingFormSubmit = true;
+                mediaRecorder.stop();
+                return;
+            }
+            if (!recordedBlob) {
+                return;
+            }
+            try {
+                var dt = new DataTransfer();
+                var ext = mimeType.indexOf("mp4") !== -1 ? "m4a" : "webm";
+                dt.items.add(new File([recordedBlob], "recording." + ext, { type: mimeType }));
+                audioFileInput.files = dt.files;
+            } catch (err) {
+                e.preventDefault();
+                alert("Could not attach the recording to the form. Try a different browser.");
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

@@ -28,19 +28,12 @@ def home(request):
     return render(request, "base.html")
 
 
-def add_to_story(request):
-    return render(request, "add_to_story.html")
-
-def view_library(request):
-    return render(request, "library.html")
-
-
 urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
     path("create/", views.create_story, name="create"),
-    path("add/", add_to_story, name="add"),
     path("library/", views.get_story_library, name="library"),
+    path("add/<int:pk>/", views.add_to_story, name="add"),
 ]
 
 if settings.DEBUG:

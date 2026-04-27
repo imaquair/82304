@@ -18,8 +18,9 @@ class Recording(models.Model):
         on_delete=models.CASCADE,
         related_name="recordings",
     )
-    audio_file = models.FileField(upload_to="recordings/")
+    audio_file = models.FileField(upload_to="recordings/", blank=True, null=True)
     order = models.PositiveIntegerField()
+    language = models.CharField(max_length=50)
     transcript_original = models.TextField(blank=True)
     transcript_english = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

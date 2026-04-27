@@ -14,7 +14,7 @@
         {% if stories %}
             <ul>
             {% for story in stories %}
-                <li><a href="#">{{ story.title }}</a></li>
+                <li><a href="{% url 'add' story.pk %}">{{ story.title }}</a></li>
             {% endfor %}
             </ul>
         {% else %}
