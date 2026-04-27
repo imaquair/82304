@@ -9,26 +9,61 @@
     <title>Chaine d'Histoires</title>
 </head>
 <body>
-    <div class="create_story_body">
+    <div class="library-body">
         <h1>The Story Library</h1>
-        {% if stories %}
-            <div class="library-grid">
-            {% for story in stories %}
-                <a href="{% url 'add' story.pk %}">
-                    <div>
-                        <h2>{{ story.title }}</h2>
-                        {{ story.recordings.last.transcript_english }}
-                    </div>
-                    <br>
-                    <div class="language-callout">
-                        {{ story.recordings.last.language }}
-                    </div>
-                </a>
-            {% endfor %}
-            </div>
+        <nav class="library-nav">
+            <ul>
+                <li class="{% if active_tab == 'in_progress' %}is-active{% endif %}">
+                    <a href="{% url 'library' %}?tab=in_progress">In progress</a>
+                </li>
+                <li class="{% if active_tab == 'completed' %}is-active{% endif %}">
+                    <a href="{% url 'library' %}?tab=completed">Completed</a>
+                </li>
+            </ul>
+        </nav><br><br>
+        {% if active_tab == 'in_progress' %}
+            {% if stories %}
+                <div class="library-grid">
+                {% for story in stories %}
+                    <a href="{% url 'add' story.pk %}">
+                        <div>
+                            <h2>{{ story.title }}</h2>
+                            {% if story.recordings.last %}
+                                {{ story.recordings.last.transcript_original }}
+                            {% endif %}
+                        </div>
+                        <br>
+                        <div class="language-callout">
+                            {% if story.recordings.last %}
+                                {{ story.recordings.last.language }}
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p>No stories yet</p>
+            {% endif %}
         {% else %}
-            <p>No stories yet</p>
+            {% if stories %}
+                <div class="library-grid">
+                {% for story in stories %}
+                    <a href="{% url 'read' story.pk %}">
+                        <div>
+                            <h2>{{ story.title }}</h2>
+                            {% if story.recordings.last %}
+                                {{ story.recordings.first.transcript_english }}
+                            {% endif %}
+                        </div>
+                    </a>
+                {% endfor %}
+                </div>
+            {% else %}
+                <p>No completed stories yet</p>
+            {% endif %}
         {% endif %}
+
+        
     </div>
 </body>
 </html>

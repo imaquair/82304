@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'chaineHistoire/css/styles.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <title>Chaine d'Histoires</title>
+</head>
+<body>
+    <div class="read-body">
+        <h1>{{ story.title }}</h1>
+        <nav class="read-nav">
+            <ul>
+                <li class="{% if active_tab == 'read' %}is-active{% endif %}">
+                    <a href="{% url 'read' story.pk %}?tab=read">Read</a>
+                </li>
+                <li class="{% if active_tab == 'listen' %}is-active{% endif %}">
+                    <a href="{% url 'read' story.pk %}?tab=listen">Listen</a>
+                </li>
+            </ul>
+        </nav><br><br>
+        <div class="read-texts">
+            {% if active_tab == 'read' %}
+                <p>
+                {% for recording in story.recordings.all %}
+                    {{ recording.transcript_english }}<br>
+                {% endfor %}
+                </p>
+                <p>
+                {% for recording in story.recordings.all %}
+                    {{ recording.transcript_original }}<br>
+                {% endfor %}
+                </p>
+            {% else %}
+                <p>TODO: combine all audio files into one large audio and display</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

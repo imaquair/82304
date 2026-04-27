@@ -34,6 +34,7 @@ urlpatterns = [
     path("create/", views.create_story, name="create"),
     path("library/", views.get_story_library, name="library"),
     path("add/<int:pk>/", views.add_to_story, name="add"),
+    path("read/<int:pk>/", views.read_story, name="read"),
 ]
 
 if settings.DEBUG:

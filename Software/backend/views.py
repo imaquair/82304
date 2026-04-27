@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.db.models import Max
+from django.db.models import Count, Max
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
@@ -104,9 +104,22 @@ def save_audio_recording(request, story_id):
     )
 
 def get_story_library(request):
-    stories = Story.objects.all() 
-    
-    return render(request, 'library.html', {'stories': stories})
+    """In progress: fewer than 20 recordings. Completed: 20 or more."""
+    tab = request.GET.get("tab", "in_progress")
+    if tab not in ("in_progress", "completed"):
+        tab = "in_progress"
+
+    annotated = Story.objects.annotate(recording_count=Count("recordings"))
+    if tab == "completed":
+        stories = annotated.filter(recording_count__gte=20)
+    else:
+        stories = annotated.filter(recording_count__lt=20)
+
+    return render(
+        request,
+        "library.html",
+        {"stories": stories, "active_tab": tab},
+    )
 
 @require_http_methods(["GET", "POST"])
 def add_to_story(request, pk):
@@ -170,3 +183,12 @@ def add_to_story(request, pk):
         return redirect("home")
     return render(request, "add_to_story.html", {"story": story})
 
+@require_http_methods(["GET"])
+def read_story(request, pk):
+    story = get_object_or_404(Story, pk=pk)
+
+    tab = request.GET.get("tab", "read")
+    if tab not in ("read", "listen"):
+        tab = "read"
+
+    return render(request, "read_story.html", {"story": story, "active_tab": tab})
