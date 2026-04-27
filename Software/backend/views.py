@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .models import Recording, Story
+from .models import Recording, Story, Keyword
 
 
 @require_http_methods(["GET", "POST"])
@@ -20,6 +20,13 @@ def create_story(request):
             errors.append("Title is required.")
         if not language:
             errors.append("Language is required.")
+        # ensure keywords exist
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if not (original and english) and not ("Three keywords are required" in errors):
+                errors.append("Three keywords are required")
+
 
         if errors:
             return render(
@@ -38,15 +45,27 @@ def create_story(request):
             language=language[:50],
             english_text=english_text,
         )
-        if audio:
-            Recording.objects.create(
-                story=story,
-                audio_file=audio,
-                order=1,
-                language=language[:50],
-                transcript_original=english_text,
-                transcript_english=english_text
-            )
+        if not audio:
+            audio = None
+        recording = Recording.objects.create(
+            story=story,
+            audio_file=audio,
+            order=1,
+            language=language[:50],
+            transcript_original=english_text,
+            transcript_english=english_text
+        )
+        # save the keywords
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if original or english:
+                Keyword.objects.create(
+                    recording=recording,
+                    original_keyword=original[:100],
+                    english_translation=english[:100],
+                )
+
         messages.success(request, "Story created.")
         return redirect("home")
 
@@ -103,6 +122,12 @@ def add_to_story(request, pk):
             errors.append("Language is required.")
         if not english_text and not audio:
             errors.append("Add text or record audio before submitting.")
+        # ensure keywords exist
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if not (original and english) and not ("Three keywords are required" in errors):
+                errors.append("Three keywords are required")
 
         if errors:
             return render(
@@ -125,9 +150,22 @@ def add_to_story(request, pk):
             "transcript_original": english_text,
             "transcript_english": english_text,
         }
-        if audio:
-            recording_payload["audio_file"] = audio
-        Recording.objects.create(**recording_payload)
+        if not audio:
+            audio = None
+        recording_payload["audio_file"] = audio
+        recording = Recording.objects.create(**recording_payload)
+
+        # save the keywords
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if original and english:
+                Keyword.objects.create(
+                    recording=recording,
+                    original_keyword=original[:100],
+                    english_translation=english[:100],
+                )
+
         messages.success(request, f'Added part {next_order} to "{story.title}".')
         return redirect("home")
     return render(request, "add_to_story.html", {"story": story})
