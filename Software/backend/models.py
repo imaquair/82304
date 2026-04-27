@@ -30,3 +30,12 @@ class Recording(models.Model):
 
     def __str__(self):
         return f"{self.story.title} - part {self.order}"
+    
+class Keyword(models.Model):
+    recording = models.ForeignKey(
+        Recording,
+        on_delete=models.CASCADE,
+        related_name="keywords",
+    )
+    original_keyword = models.TextField(blank=True)
+    english_translation = models.TextField(blank=True)

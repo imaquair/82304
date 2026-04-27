@@ -12,6 +12,12 @@
     <div class="create_story_body">
         <h1>Add to "{{ story.title }}"</h1>
         <p class="previous_story_text">{{ story.recordings.last.transcript_english|default:"No previous text yet." }}</p>
+        <p class="previous_story_text">
+            Keywords<br><br>
+        {% for kw in story.recordings.last.keywords.all %}
+            {{ kw.original_keyword }}: {{ kw.english_translation }} <br>
+        {% endfor %}
+        </p>
         {% if errors %}
         <ul class="form-errors">
             {% for err in errors %}
@@ -38,6 +44,22 @@
             <audio id="playback" class="create-playback" controls playsinline hidden></audio>
             <br><br>
             <textarea name="english_text" id="english_text" placeholder="Type to start story" rows="3" cols="100" maxlength="200">{{ english_text|default:'' }}</textarea><br><br>
+
+            <span>
+                <div class="keyword-grid" aria-label="Keywords and English translations">
+                    <div>Keyword</div>
+                    <div>English translation</div>
+
+                    <input type="text" name="keyword_1" aria-label="original keyword 1" maxlength="50" />
+                    <input type="text" name="keyword_en_1" aria-label="translated keyword 1" maxlength="50" />
+
+                    <input type="text" name="keyword_2" aria-label="original keyword 2" maxlength="50" />
+                    <input type="text" name="keyword_en_2" aria-label="translated keyword 2" maxlength="50" />
+
+                    <input type="text" name="keyword_3" aria-label="original keyword 3" maxlength="50" />
+                    <input type="text" name="keyword_en_3" aria-label="translated keyword 3" maxlength="50" />
+                </div>
+            </span><br><br>
 
             <a href="/"><span class="material-symbols-outlined">arrow_back</span></a>
             <input type="submit" value="Submit">
