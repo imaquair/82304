@@ -43,6 +43,9 @@ def create_story(request):
                 story=story,
                 audio_file=audio,
                 order=1,
+                language=language[:50],
+                transcript_original=english_text,
+                transcript_english=english_text
             )
         messages.success(request, "Story created.")
         return redirect("home")
@@ -80,3 +83,52 @@ def save_audio_recording(request, story_id):
             "file_url": recording.audio_file.url,
         }
     )
+
+def get_story_library(request):
+    stories = Story.objects.all() 
+    
+    return render(request, 'library.html', {'stories': stories})
+
+@require_http_methods(["GET", "POST"])
+def add_to_story(request, pk):
+    story = get_object_or_404(Story, pk=pk)
+
+    if request.method == "POST":
+        language = request.POST.get("language", "").strip()
+        english_text = request.POST.get("english_text", "").strip()
+        audio = request.FILES.get("audio")
+
+        errors = []
+        if not language:
+            errors.append("Language is required.")
+        if not english_text and not audio:
+            errors.append("Add text or record audio before submitting.")
+
+        if errors:
+            return render(
+                request,
+                "add_to_story.html",
+                {
+                    "story": story,
+                    "errors": errors,
+                    "language": language,
+                    "english_text": english_text,
+                },
+            )
+
+        max_order = story.recordings.aggregate(m=Max("order"))["m"]
+        next_order = (max_order or 0) + 1
+        recording_payload = {
+            "story": story,
+            "order": next_order,
+            "language": language[:50],
+            "transcript_original": english_text,
+            "transcript_english": english_text,
+        }
+        if audio:
+            recording_payload["audio_file"] = audio
+        Recording.objects.create(**recording_payload)
+        messages.success(request, f'Added part {next_order} to "{story.title}".')
+        return redirect("home")
+    return render(request, "add_to_story.html", {"story": story})
+
