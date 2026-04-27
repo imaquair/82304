@@ -20,6 +20,13 @@ def create_story(request):
             errors.append("Title is required.")
         if not language:
             errors.append("Language is required.")
+        # ensure keywords exist
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if not (original and english) and not ("Three keywords are required" in errors):
+                errors.append("Three keywords are required")
+
 
         if errors:
             return render(
@@ -115,6 +122,12 @@ def add_to_story(request, pk):
             errors.append("Language is required.")
         if not english_text and not audio:
             errors.append("Add text or record audio before submitting.")
+        # ensure keywords exist
+        for i in range(1, 4):
+            original = request.POST.get(f"keyword_{i}", "").strip()
+            english = request.POST.get(f"keyword_en_{i}", "").strip()
+            if not (original and english) and not ("Three keywords are required" in errors):
+                errors.append("Three keywords are required")
 
         if errors:
             return render(
@@ -146,7 +159,7 @@ def add_to_story(request, pk):
         for i in range(1, 4):
             original = request.POST.get(f"keyword_{i}", "").strip()
             english = request.POST.get(f"keyword_en_{i}", "").strip()
-            if original or english:
+            if original and english:
                 Keyword.objects.create(
                     recording=recording,
                     original_keyword=original[:100],
