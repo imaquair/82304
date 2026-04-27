@@ -21,7 +21,7 @@ from django.contrib import admin
 from django.shortcuts import render
 from django.urls import path
 
-from backend import views as backend_views
+from backend import views
 
 
 def home(request):
@@ -31,12 +31,16 @@ def home(request):
 def add_to_story(request):
     return render(request, "add_to_story.html")
 
+def view_library(request):
+    return render(request, "library.html")
+
 
 urlpatterns = [
     path("", home, name="home"),
     path("admin/", admin.site.urls),
-    path("create/", backend_views.create_story, name="create"),
+    path("create/", views.create_story, name="create"),
     path("add/", add_to_story, name="add"),
+    path("library/", views.get_story_library, name="library"),
 ]
 
 if settings.DEBUG:

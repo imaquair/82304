@@ -80,3 +80,8 @@ def save_audio_recording(request, story_id):
             "file_url": recording.audio_file.url,
         }
     )
+
+def get_story_library(request):
+    stories = Story.objects.all() 
+    
+    return render(request, 'library.html', {'stories': stories})
