@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.conf import settings
 from django.db.models import Count, Max
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,9 +7,25 @@ from django.views.decorators.http import require_http_methods, require_POST
 
 from .models import Recording, Story, Keyword
 
+CREATE_GATE_SESSION_KEY = "create_story_access_granted"
+
 
 @require_http_methods(["GET", "POST"])
 def create_story(request):
+    create_story_password = getattr(settings, "CREATE_STORY_PASSWORD", "")
+    if create_story_password and not request.session.get(CREATE_GATE_SESSION_KEY, False):
+        if request.method == "POST" and "create_access_password" in request.POST:
+            submitted_password = request.POST.get("create_access_password", "")
+            if submitted_password == create_story_password:
+                request.session[CREATE_GATE_SESSION_KEY] = True
+                return redirect("create")
+            return render(
+                request,
+                "create_gate.html",
+                {"gate_error": "Incorrect password. Try again."},
+            )
+        return render(request, "create_gate.html", {})
+
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         language = request.POST.get("language", "").strip()
@@ -111,7 +128,7 @@ def get_story_library(request):
 
     annotated = Story.objects.annotate(recording_count=Count("recordings"))
     if tab == "completed":
-        stories = annotated.filter(recording_count__gte=20)
+        stories = annotated.filter(recording_count__gte=1)
     else:
         stories = annotated.filter(recording_count__lt=20)
 

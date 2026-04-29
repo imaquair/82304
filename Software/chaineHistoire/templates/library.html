@@ -19,9 +19,6 @@
                 <li class="{% if active_tab == 'completed' %}is-active{% endif %}">
                     <a href="{% url 'library' %}?tab=completed">Completed</a>
                 </li>
-                <li>
-                    <a href="{% url 'create' %}">Create</a>
-                </li>
             </ul>
         </nav><br><br>
         {% if active_tab == 'in_progress' %}

@@ -39,6 +39,11 @@
 
 .create_story_body input[type="text"] {
     width: 100%;
+    padding: 10px;
+    border-bottom: 2px solid #d9d9d9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
     outline: none;
 }
 
@@ -283,4 +288,40 @@
 .read-nav li.is-active {
     border-bottom-color: #333;
     font-weight: 600;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  .read-nav,
+  .material-symbols-outlined {
+    display: none !important;
+  }
+
+  .read-body {
+    position: static !important;
+    transform: none !important;
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Remove extra vertical whitespace after hidden nav. */
+  .read-nav + br,
+  .read-nav + br + br {
+    display: none !important;
+  }
+}
+
+/* Create a story gate */
+#create_access_password {
+    padding: 10px;
+    border-bottom: 2px solid #d9d9d9;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    outline: none;
 }
