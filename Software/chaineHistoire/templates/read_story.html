@@ -19,6 +19,9 @@
                 <li class="{% if active_tab == 'listen' %}is-active{% endif %}">
                     <a href="{% url 'read' story.pk %}?tab=listen">Listen</a>
                 </li>
+                <li>
+                    <a href="#" onclick="window.print();">Print</a>
+                </li>
             </ul>
         </nav><br><br>
         <div class="read-texts">
