@@ -25,11 +25,11 @@ from backend import views
 
 
 def home(request):
-    return render(request, "base.html")
+    return render(request, "library.html")
 
 
 urlpatterns = [
-    path("", home, name="home"),
+    path("", views.get_story_library, name="home"),
     path("admin/", admin.site.urls),
     path("create/", views.create_story, name="create"),
     path("library/", views.get_story_library, name="library"),
