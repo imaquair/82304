@@ -22,11 +22,11 @@
             {% csrf_token %}
             <input type="file" name="audio" id="audio-file-input" class="visually-hidden" accept="audio/*,.webm,.mp4" tabindex="-1" aria-hidden="true" />
 
-            <label for="title">Title</label>
-            <span><input type="text" name="title" id="title" value="{{ title|default:'' }}" required maxlength="255" /></span><br><br>
+            <!--<label for="title">Title</label>-->
+            <span><input type="text" name="title" placeholder="Title" id="title" value="{{ title|default:'' }}" required maxlength="255" /></span><br><br>
 
-            <label for="language">Language</label>
-            <span><input type="text" name="language" id="language" value="{{ language|default:'' }}" required maxlength="50" /></span><br><br>
+            <!--<label for="language">Language</label>-->
+            <span><input type="text" name="language" placeholder="Language" id="language" value="{{ language|default:'' }}" required maxlength="50" /></span><br><br>
 
             <div class="create-inline-record-row">
                 <span class="create-inline-record-label" id="add-text-label">Add Text or</span>

@@ -1,4 +1,12 @@
 
+body {
+    font-size: 18pt;
+}
+
+input {
+    font-size: 18pt;
+}
+
 /* Styles for choosing to create a new story or add to an existing one */
 .home_buttons {
     position: absolute;
@@ -21,11 +29,13 @@
 
 /* Create a story styles */
 .create_story_body {
-    position: absolute;
+    /*position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 30rem;
+    transform: translate(-50%, -50%);*/
+    margin: auto;
+    margin-top: 70px;
+    width: 35rem;
 }
 
 .create_story_body form {
