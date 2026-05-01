@@ -1,6 +1,19 @@
 
 body {
     font-size: 18pt;
+    /*background: #fdf6ed;*/
+    background-color: #f8f2ef;
+}
+
+.font {
+  font-family: "Elms Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.about-body {
+    padding: 2.5em;
 }
 
 input {
@@ -200,26 +213,108 @@ input {
 /* Library styles */
 .library-grid {
     display: grid;
-    column-gap: 20px;
+    column-gap: 10px;
     row-gap: 20px;
     grid-template-columns: auto auto auto;
 }
 
 .library-grid a {
-  background-color: #f1f1f1;
+  background-color: #bfd1e0;
   padding: 15px;
-  width: 25vw;
+  width: 28vw;
   border-radius: 10px;
+}
+
+/* Library cards: stretch to row height; pin footer (CTA or language + progress) to bottom */
+.library-grid a.library-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.library-grid a.library-card .library-card-main {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.library-grid a.library-card .library-card-excerpt {
+  margin: 0.5rem 0 0 0;
+}
+
+.library-grid a.library-card .library-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.library-grid a.library-card .view-story {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.library-grid a.library-card .library-card-footer .story-progress-bar {
+  margin-top: 0;
 }
 
 .library-grid .language-callout {
     padding: 10px;
-    background-color: #e9e9e9;
+    background-color: #dfe8f0;
     border-radius: 10px;
 }
 
 .library-body {
-    padding: 5em;
+    padding: 2.5em;
+    padding-top: 1em;
+}
+
+.library-body .view-story {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    border: none;
+    padding: 10px;
+    background-color: #dfe8f0;
+    font-size: 18pt;
+    border-radius: 10px;
+    font-weight: 200;
+    text-align: center;
+}
+
+/* Story completion bar — taller pill shape; WebKit + Firefox */
+.library-body .story-progress-bar {
+    -webkit-appearance: none;
+    appearance: none;
+    --progress-track: #dfe8f0;
+    --progress-fill: linear-gradient(90deg, #4d6b82 0%, #6d92ad 100%);
+    width: 100%;
+    height: 18px;
+    margin-top: 0.85rem;
+    border: none;
+    border-radius: 999px;
+    overflow: hidden;
+    background: var(--progress-track);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.08),
+        0 1px 2px rgba(255, 255, 255, 0.85);
+    vertical-align: middle;
+}
+
+.library-body .story-progress-bar::-webkit-progress-bar {
+    background: var(--progress-track);
+    border-radius: 999px;
+}
+
+.library-body .story-progress-bar::-webkit-progress-value {
+    background: var(--progress-fill);
+    border-radius: 999px;
+}
+
+.library-body .story-progress-bar::-moz-progress-bar {
+    background: var(--progress-fill);
+    border-radius: 999px;
 }
 
 .library-body a {

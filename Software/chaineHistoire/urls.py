@@ -27,6 +27,9 @@ from backend import views
 def home(request):
     return render(request, "library.html")
 
+def about(request):
+    return render(request, "about.html")
+
 
 urlpatterns = [
     path("", views.get_story_library, name="home"),
@@ -35,6 +38,7 @@ urlpatterns = [
     path("library/", views.get_story_library, name="library"),
     path("add/<int:pk>/", views.add_to_story, name="add"),
     path("read/<int:pk>/", views.read_story, name="read"),
+    path("about/", about, name="about"),
 ]
 
 if settings.DEBUG:

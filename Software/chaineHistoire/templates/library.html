@@ -6,10 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="{% static 'chaineHistoire/css/styles.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <link href="https://fonts.googleapis.com/css2?family=Abel&family=Elms+Sans:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
     <title>Chaine d'Histoires</title>
 </head>
 <body>
-    <div class="library-body">
+    <div class="library-body font">
         <h1>The Story Library</h1>
         <nav class="library-nav">
             <ul>
@@ -19,25 +20,29 @@
                 <li class="{% if active_tab == 'completed' %}is-active{% endif %}">
                     <a href="{% url 'library' %}?tab=completed">Completed</a>
                 </li>
+                <li>
+                    <a href="{% url 'about' %}">About</a>
+                </li>
             </ul>
         </nav><br><br>
         {% if active_tab == 'in_progress' %}
             {% if stories %}
                 <div class="library-grid">
                 {% for story in stories %}
-                    <a href="{% url 'add' story.pk %}">
-                        <div>
+                    <a class="library-card library-card--in-progress" href="{% url 'add' story.pk %}">
+                        <div class="library-card-main">
                             <h2>{{ story.title }}</h2>
                             {% if story.recordings.last %}
-                                {{ story.recordings.last.transcript_original }}
+                                <p class="library-card-excerpt">{{ story.recordings.last.transcript_original }}</p>
                             {% endif %}
                         </div>
                         <br>
-                        <div class="language-callout">
-                            {% if story.recordings.last %}
-                                {{ story.recordings.last.language }}
-                            {% endif %}
-                        </div>
+                        {% if story.recordings.last %}
+                            <div class="library-card-footer">
+                                <div class="language-callout">{{ story.recordings.last.language }}</div>
+                                <progress class="story-progress-bar" value="{{ story.recordings.last.order }}" max="20"></progress>
+                            </div>
+                        {% endif %}
                     </a>
                 {% endfor %}
                 </div>
@@ -48,13 +53,15 @@
             {% if stories %}
                 <div class="library-grid">
                 {% for story in stories %}
-                    <a href="{% url 'read' story.pk %}">
-                        <div>
+                    <a class="library-card library-card--completed" href="{% url 'read' story.pk %}">
+                        <div class="library-card-main">
                             <h2>{{ story.title }}</h2>
                             {% if story.recordings.last %}
-                                {{ story.recordings.first.transcript_english }}
+                                <p class="library-card-excerpt">{{ story.recordings.first.transcript_english }}</p>
                             {% endif %}
                         </div>
+                        <br>
+                        <span class="view-story">View full story</span>
                     </a>
                 {% endfor %}
                 </div>

@@ -43,7 +43,7 @@
             </div>
             <audio id="playback" class="create-playback" controls playsinline hidden></audio>
             <br><br>
-            <textarea name="english_text" id="english_text" placeholder="Type to start story" rows="3" cols="100" maxlength="200">{{ english_text|default:'' }}</textarea><br><br>
+            <textarea name="english_text" id="english_text" placeholder="Type or speak your story (recording is transcribed here when your browser supports it)" rows="3" cols="100" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
 
             <span>
                 <div class="keyword-grid" aria-label="Keywords and English translations">
@@ -77,12 +77,120 @@
         var playback = document.getElementById("playback");
         var playbackObjectUrl = null;
         var recording_text = document.getElementById("recording_text");
+        var englishText = document.getElementById("english_text");
+        var languageInput = document.getElementById("language");
 
         var mediaRecorder = null;
         var chunks = [];
         var recordedBlob = null;
         var mimeType = "audio/webm";
         var pendingFormSubmit = false;
+
+        var speechRecognition = null;
+        var endingSpeechSession = false;
+        var committedTranscript = "";
+        var recordingTextPrefix = "";
+
+        var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        function resolveSpeechLang(raw) {
+            var s = (raw || "").trim().toLowerCase();
+            if (!s) {
+                return "en-US";
+            }
+            if (/^[a-z]{2}(-[a-z]{2})?$/i.test(s.replace(/_/g, "-"))) {
+                if (s.length === 2) {
+                    var r = { en: "US", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "BR", nl: "NL", pl: "PL", ru: "RU", ja: "JP", ko: "KR", zh: "CN", ar: "SA", hi: "IN" };
+                    return s + "-" + (r[s] || s.toUpperCase());
+                }
+                return s;
+            }
+            var map = {
+                english: "en-US",
+                french: "fr-FR",
+                spanish: "es-ES",
+                german: "de-DE",
+                italian: "it-IT",
+                portuguese: "pt-BR",
+                dutch: "nl-NL",
+                polish: "pl-PL",
+                russian: "ru-RU",
+                japanese: "ja-JP",
+                chinese: "zh-CN",
+                korean: "ko-KR",
+                arabic: "ar-SA",
+                hindi: "hi-IN",
+            };
+            return map[s] || "en-US";
+        }
+
+        function stopSpeechRecognition() {
+            if (!speechRecognition) {
+                return;
+            }
+            endingSpeechSession = true;
+            try {
+                speechRecognition.stop();
+            } catch (err) {
+                /* ignore */
+            }
+            speechRecognition = null;
+        }
+
+        function applyTranscriptToTextarea(interim) {
+            var spacer = recordingTextPrefix && (committedTranscript || interim) ? " " : "";
+            englishText.value =
+                recordingTextPrefix + spacer + committedTranscript + (interim || "");
+        }
+
+        function startSpeechRecognition() {
+            if (!SpeechRecognitionCtor) {
+                return;
+            }
+            committedTranscript = "";
+            recordingTextPrefix = englishText.value;
+            speechRecognition = new SpeechRecognitionCtor();
+            speechRecognition.continuous = true;
+            speechRecognition.interimResults = true;
+            speechRecognition.lang = resolveSpeechLang(languageInput ? languageInput.value : "");
+
+            speechRecognition.onresult = function (event) {
+                var interim = "";
+                var i;
+                for (i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        committedTranscript += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                applyTranscriptToTextarea(interim);
+            };
+
+            speechRecognition.onend = function () {
+                if (endingSpeechSession) {
+                    endingSpeechSession = false;
+                    return;
+                }
+                if (mediaRecorder && mediaRecorder.state === "recording" && speechRecognition) {
+                    try {
+                        speechRecognition.start();
+                    } catch (err) {
+                        /* InvalidStateError if already running */
+                    }
+                }
+            };
+
+            speechRecognition.onerror = function () {
+                /* Network errors or no-speech are common; keep recording audio */
+            };
+
+            try {
+                speechRecognition.start();
+            } catch (err) {
+                speechRecognition = null;
+            }
+        }
 
         var canRecord = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
 
@@ -98,6 +206,8 @@
         btnStart.addEventListener("click", function () {
             chunks = [];
             recordedBlob = null;
+            endingSpeechSession = false;
+            stopSpeechRecognition();
             audioFileInput.value = "";
             if (playbackObjectUrl) {
                 URL.revokeObjectURL(playbackObjectUrl);
@@ -121,6 +231,7 @@
                     }
                 };
                 mediaRecorder.onstop = function () {
+                    stopSpeechRecognition();
                     stream.getTracks().forEach(function (t) { t.stop(); });
                     recordedBlob = new Blob(chunks, { type: mimeType });
                     if (playbackObjectUrl) {
@@ -139,6 +250,7 @@
                     }
                 };
                 mediaRecorder.start();
+                startSpeechRecognition();
                 btnStart.disabled = true;
                 recording_text.style.display = "block";
                 btnEnd.disabled = false;
@@ -148,6 +260,7 @@
         });
 
         btnEnd.addEventListener("click", function () {
+            stopSpeechRecognition();
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 mediaRecorder.stop();
             }
@@ -157,6 +270,7 @@
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 e.preventDefault();
                 pendingFormSubmit = true;
+                stopSpeechRecognition();
                 mediaRecorder.stop();
                 return;
             }
