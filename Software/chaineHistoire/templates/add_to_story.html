@@ -9,15 +9,31 @@
     <title>Chaine d'Histoires</title>
 </head>
 <body>
-    <div class="create_story_body">
+    <div class="create_story_body font">
         <h1 class="font-family: 'Times New Roman', Times, serif;">Add to "{{ story.title }}"</h1>
-        <p class="previous_story_text">{{ story.recordings.last.transcript_english|default:"No previous text yet." }}</p>
+        <p class="previous_story_text previous-transcript-prose">
+            {% if previous_transcript_segments is None %}
+                No previous text yet.
+            {% else %}
+                {% for seg in previous_transcript_segments %}
+                    {% if seg.kind == "space" %}{{ seg.text }}{% elif seg.translation %}
+                    <a href="#" class="preview-word preview-word--selected keyword-tooltip-link previous-keyword-word" data-tooltip="{{ seg.translation }}" aria-label="{{ seg.text }}: {{ seg.translation }}" tabindex="0">{{ seg.text }}</a>
+                    {% else %}
+                    {{ seg.text }}
+                    {% endif %}
+                {% empty %}
+                No previous text yet.
+                {% endfor %}
+            {% endif %}
+        </p>
+        {% if story.recordings.last %}
         <p class="previous_story_text">
             Keywords<br><br>
-        {% for kw in story.recordings.last.keywords.all %}
-            {{ kw.original_keyword }}: {{ kw.english_translation }} <br>
-        {% endfor %}
+            {% for kw in story.recordings.last.keywords.all %}
+                {{ kw.original_keyword }}: {{ kw.english_translation }} <br>
+            {% endfor %}
         </p>
+        {% endif %}
         {% if errors %}
         <ul class="form-errors">
             {% for err in errors %}
@@ -43,8 +59,8 @@
             </div>
             <audio id="playback" class="create-playback" controls playsinline hidden></audio>
             <br><br>
-            <textarea name="english_text" id="english_text" placeholder="Type or speak your story (recording is transcribed here when your browser supports it)" rows="3" cols="100" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
-
+            <textarea name="english_text" id="english_text" placeholder="Type or speak your story (recording is transcribed here when your browser supports it)" rows="3" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
+            <!--
             <span>
                 <div class="keyword-grid" aria-label="Keywords and English translations">
                     <div>Keyword</div>
@@ -60,10 +76,36 @@
                     <input type="text" name="keyword_en_3" aria-label="translated keyword 3" maxlength="50" />
                 </div>
             </span><br><br>
+        -->
+            <p>Choose exactly three keywords — click a word in the preview below, then enter its English translation.</p>
+            <p id="draft-story-preview" class="previous_story_text draft-story-live" aria-live="off"></p>
+            <p id="keyword-selection-status" class="keyword-selection-status" aria-live="polite"></p>
+
+            <input type="hidden" name="keyword_1" id="keyword_1" value="" />
+            <input type="hidden" name="keyword_en_1" id="keyword_en_1" value="" />
+            <input type="hidden" name="keyword_2" id="keyword_2" value="" />
+            <input type="hidden" name="keyword_en_2" id="keyword_en_2" value="" />
+            <input type="hidden" name="keyword_3" id="keyword_3" value="" />
+            <input type="hidden" name="keyword_en_3" id="keyword_en_3" value="" />
 
             <a href="{% url 'library' %}"><span class="material-symbols-outlined">arrow_back</span></a>
             <input type="submit" value="Submit">
         </form>
+    </div>
+
+    <div id="keyword-modal" class="keyword-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="keyword-modal-title" aria-hidden="true">
+        <div class="keyword-modal-backdrop" id="keyword-modal-backdrop" tabindex="-1"></div>
+        <div class="keyword-modal-panel">
+            <h2 id="keyword-modal-title" class="keyword-modal-title">Keyword translation</h2>
+            <p class="keyword-modal-original-wrap">Word: <strong id="keyword-modal-word"></strong></p>
+            <label class="keyword-modal-label" for="keyword-modal-en">English translation</label>
+            <input type="text" id="keyword-modal-en" class="keyword-modal-input" maxlength="100" autocomplete="off" />
+            <div class="keyword-modal-actions">
+                <button type="button" class="create-inline-btn keyword-modal-remove" id="keyword-modal-remove">Remove keyword</button>
+                <button type="button" class="create-inline-btn" id="keyword-modal-cancel">Cancel</button>
+                <button type="button" class="create-inline-btn keyword-modal-save" id="keyword-modal-save">Save</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -78,7 +120,202 @@
         var playbackObjectUrl = null;
         var recording_text = document.getElementById("recording_text");
         var englishText = document.getElementById("english_text");
+        var draftPreview = document.getElementById("draft-story-preview");
         var languageInput = document.getElementById("language");
+        var keywordStatus = document.getElementById("keyword-selection-status");
+        var keywordModal = document.getElementById("keyword-modal");
+        var keywordModalWord = document.getElementById("keyword-modal-word");
+        var keywordModalEn = document.getElementById("keyword-modal-en");
+        var keywordModalSave = document.getElementById("keyword-modal-save");
+        var keywordModalCancel = document.getElementById("keyword-modal-cancel");
+        var keywordModalRemove = document.getElementById("keyword-modal-remove");
+        var keywordModalBackdrop = document.getElementById("keyword-modal-backdrop");
+
+        var keywordSelections = [];
+
+        var modalContext = null;
+
+        function pruneKeywordSelections() {
+            var text = englishText.value;
+            keywordSelections = keywordSelections.filter(function (k) {
+                return text.slice(k.start, k.end) === k.original;
+            });
+        }
+
+        function findKeywordSelection(start, end) {
+            var i;
+            for (i = 0; i < keywordSelections.length; i++) {
+                var k = keywordSelections[i];
+                if (k.start === start && k.end === end) {
+                    return { entry: k, index: i };
+                }
+            }
+            return null;
+        }
+
+        function updateKeywordHiddenInputs() {
+            var i;
+            for (i = 0; i < 3; i++) {
+                var kw = keywordSelections[i];
+                document.getElementById("keyword_" + (i + 1)).value = kw ? kw.original : "";
+                document.getElementById("keyword_en_" + (i + 1)).value = kw ? kw.english : "";
+            }
+        }
+
+        function updateKeywordStatusLine() {
+            if (!keywordStatus) {
+                return;
+            }
+            var n = keywordSelections.length;
+            keywordStatus.textContent =
+                n === 0
+                    ? "No keywords selected yet (0 of 3)."
+                    : n === 3
+                      ? "Three keywords selected. Hover a highlighted word to see its English translation."
+                      : n + " of 3 keywords selected.";
+        }
+
+        function closeKeywordModal() {
+            modalContext = null;
+            keywordModal.classList.add("is-hidden");
+            keywordModal.setAttribute("aria-hidden", "true");
+        }
+
+        function openKeywordModal(ctx) {
+            modalContext = ctx;
+            keywordModalWord.textContent = ctx.original;
+            keywordModalEn.value = ctx.english || "";
+            keywordModalRemove.style.display = ctx.mode === "edit" ? "inline-block" : "none";
+            keywordModal.classList.remove("is-hidden");
+            keywordModal.setAttribute("aria-hidden", "false");
+            setTimeout(function () {
+                keywordModalEn.focus();
+                keywordModalEn.select();
+            }, 0);
+        }
+
+        function onPreviewWordClick(ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var el = ev.currentTarget;
+            var start = parseInt(el.getAttribute("data-start"), 10);
+            var end = parseInt(el.getAttribute("data-end"), 10);
+            var original = englishText.value.slice(start, end);
+            var found = findKeywordSelection(start, end);
+            if (found) {
+                openKeywordModal({
+                    mode: "edit",
+                    start: start,
+                    end: end,
+                    original: original,
+                    english: found.entry.english,
+                    index: found.index,
+                });
+                return;
+            }
+            if (keywordSelections.length >= 3) {
+                alert(
+                    "You can choose at most three keywords. Click a highlighted word to change or remove it."
+                );
+                return;
+            }
+            openKeywordModal({
+                mode: "add",
+                start: start,
+                end: end,
+                original: original,
+                english: "",
+            });
+        }
+
+        function renderDraftPreview() {
+            if (!draftPreview || !englishText) {
+                return;
+            }
+            pruneKeywordSelections();
+            var text = englishText.value;
+            draftPreview.innerHTML = "";
+            var re = /(\s+)|(\S+)/g;
+            var match;
+            while ((match = re.exec(text)) !== null) {
+                if (match[1]) {
+                    draftPreview.appendChild(document.createTextNode(match[1]));
+                } else if (match[2]) {
+                    var start = match.index;
+                    var end = match.index + match[2].length;
+                    var link = document.createElement("a");
+                    link.className = "preview-word";
+                    link.setAttribute("href", "#");
+                    link.setAttribute("data-start", String(start));
+                    link.setAttribute("data-end", String(end));
+                    var sel = findKeywordSelection(start, end);
+                    if (sel) {
+                        link.classList.add("preview-word--selected", "keyword-tooltip-link");
+                        link.dataset.tooltip = sel.entry.english;
+                        link.setAttribute(
+                            "aria-label",
+                            sel.entry.original + ", English: " + sel.entry.english
+                        );
+                    } else {
+                        delete link.dataset.tooltip;
+                        link.setAttribute("aria-label", "Choose keyword: " + match[2]);
+                    }
+                    link.appendChild(document.createTextNode(match[2]));
+                    link.addEventListener("click", onPreviewWordClick);
+                    draftPreview.appendChild(link);
+                }
+            }
+            updateKeywordHiddenInputs();
+            updateKeywordStatusLine();
+        }
+
+        keywordModalSave.addEventListener("click", function () {
+            if (!modalContext) {
+                return;
+            }
+            var en = keywordModalEn.value.trim();
+            if (!en) {
+                alert("Please enter an English translation.");
+                return;
+            }
+            if (modalContext.mode === "add") {
+                keywordSelections.push({
+                    start: modalContext.start,
+                    end: modalContext.end,
+                    original: modalContext.original,
+                    english: en,
+                });
+            } else if (modalContext.mode === "edit" && modalContext.index !== undefined) {
+                keywordSelections[modalContext.index].english = en;
+            }
+            closeKeywordModal();
+            renderDraftPreview();
+        });
+
+        keywordModalRemove.addEventListener("click", function () {
+            if (!modalContext || modalContext.mode !== "edit" || modalContext.index === undefined) {
+                return;
+            }
+            keywordSelections.splice(modalContext.index, 1);
+            closeKeywordModal();
+            renderDraftPreview();
+        });
+
+        keywordModalCancel.addEventListener("click", closeKeywordModal);
+        keywordModalBackdrop.addEventListener("click", closeKeywordModal);
+
+        keywordModalEn.addEventListener("keydown", function (kev) {
+            if (kev.key === "Enter") {
+                kev.preventDefault();
+                keywordModalSave.click();
+            }
+        });
+
+        document.addEventListener("keydown", function (kev) {
+            if (kev.key === "Escape" && !keywordModal.classList.contains("is-hidden")) {
+                closeKeywordModal();
+            }
+        });
 
         var mediaRecorder = null;
         var chunks = [];
@@ -141,6 +378,7 @@
             var spacer = recordingTextPrefix && (committedTranscript || interim) ? " " : "";
             englishText.value =
                 recordingTextPrefix + spacer + committedTranscript + (interim || "");
+            renderDraftPreview();
         }
 
         function startSpeechRecognition() {
@@ -274,6 +512,15 @@
                 mediaRecorder.stop();
                 return;
             }
+            pruneKeywordSelections();
+            updateKeywordHiddenInputs();
+            if (keywordSelections.length !== 3) {
+                e.preventDefault();
+                alert(
+                    "Please choose exactly three keywords from the preview and enter an English translation for each."
+                );
+                return;
+            }
             if (!recordedBlob) {
                 return;
             }
@@ -287,6 +534,19 @@
                 alert("Could not attach the recording to the form. Try a different browser.");
             }
         });
+
+        englishText.addEventListener("input", renderDraftPreview);
+        renderDraftPreview();
+
+        var previousTranscriptProse = document.querySelector(".previous-transcript-prose");
+        if (previousTranscriptProse) {
+            previousTranscriptProse.addEventListener("click", function (e) {
+                var t = e.target.closest("a.previous-keyword-word");
+                if (t) {
+                    e.preventDefault();
+                }
+            });
+        }
     })();
     </script>
 </body>

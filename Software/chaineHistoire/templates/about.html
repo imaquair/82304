@@ -1,0 +1,27 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'chaineHistoire/css/styles.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <title>Chaine d'Histoires</title>
+</head>
+<body>
+    <div class="about-body font">
+        <h1>About</h1>
+        <p>Welcome to La Chaine d'Histoires!</p>
+
+        <h2>How-To</h2>
+        <p>
+            Visit <a href="{% url 'library' %}">the story library</a> to view all
+            current stories. Each story lists the title and language of the last
+            phrase. Click on a story to add to it! 
+        </p>
+        <p>
+            
+        </p>
+    </div>
+</body>
+</html>

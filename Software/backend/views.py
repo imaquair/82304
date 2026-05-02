@@ -1,3 +1,5 @@
+import re
+
 from django.contrib import messages
 from django.conf import settings
 from django.db.models import Count, Max
@@ -8,6 +10,35 @@ from django.views.decorators.http import require_http_methods, require_POST
 from .models import Recording, Story, Keyword
 
 CREATE_GATE_SESSION_KEY = "create_story_access_granted"
+
+_PUNCT_STRIP = ".,;:!?«»\"'()[]…"
+
+
+def segment_transcript_with_keywords(text, keywords):
+    """Split transcript into space / word segments; words matching a Keyword get a translation."""
+    kw_map = {kw.original_keyword: kw.english_translation for kw in keywords}
+    segments = []
+    for m in re.finditer(r"(\s+)|(\S+)", text):
+        if m.group(1):
+            segments.append({"kind": "space", "text": m.group(1)})
+            continue
+        word = m.group(2)
+        trans = kw_map.get(word)
+        if trans is None and word:
+            stripped = word.strip(_PUNCT_STRIP)
+            trans = kw_map.get(stripped)
+        segments.append({"kind": "word", "text": word, "translation": trans})
+    return segments
+
+
+def previous_transcript_segments_for_story(story):
+    last_rec = story.recordings.last()
+    if last_rec is None:
+        return None
+    return segment_transcript_with_keywords(
+        last_rec.transcript_english or "",
+        last_rec.keywords.all(),
+    )
 
 
 @require_http_methods(["GET", "POST"])
@@ -168,6 +199,9 @@ def add_to_story(request, pk):
                     "errors": errors,
                     "language": language.capitalize(),
                     "english_text": english_text,
+                    "previous_transcript_segments": previous_transcript_segments_for_story(
+                        story
+                    ),
                 },
             )
 
@@ -198,7 +232,14 @@ def add_to_story(request, pk):
 
         messages.success(request, f'Added part {next_order} to "{story.title}".')
         return redirect("home")
-    return render(request, "add_to_story.html", {"story": story})
+    return render(
+        request,
+        "add_to_story.html",
+        {
+            "story": story,
+            "previous_transcript_segments": previous_transcript_segments_for_story(story),
+        },
+    )
 
 @require_http_methods(["GET"])
 def read_story(request, pk):
