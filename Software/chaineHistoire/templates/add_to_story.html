@@ -19,10 +19,10 @@
                     {% if seg.kind == "space" %}{{ seg.text }}{% elif seg.translation %}
                     <a href="#" class="preview-word preview-word--selected keyword-tooltip-link previous-keyword-word" data-tooltip="{{ seg.translation }}" aria-label="{{ seg.text }}: {{ seg.translation }}" tabindex="0">{{ seg.text }}</a>
                     {% else %}
-                    {{ seg.text }}
+                        {{ seg.text }}
                     {% endif %}
                 {% empty %}
-                No previous text yet.
+                    No previous text yet.
                 {% endfor %}
             {% endif %}
         </p>
@@ -68,7 +68,7 @@
         </form>
     </div>
 
-    <div id="keyword-modal" class="keyword-modal is-hidden" role="dialog" aria-modal="true" aria-labelledby="keyword-modal-title" aria-hidden="true">
+    <div id="keyword-modal" class="keyword-modal is-hidden font" role="dialog" aria-modal="true" aria-labelledby="keyword-modal-title" aria-hidden="true">
         <div class="keyword-modal-backdrop" id="keyword-modal-backdrop" tabindex="-1"></div>
         <div class="keyword-modal-panel">
             <h2 id="keyword-modal-title" class="keyword-modal-title">Keyword translation</h2>

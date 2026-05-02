@@ -96,6 +96,7 @@ input {
     border: none;
     text-decoration: none;
     color: black;
+    border-radius: 10px;
 }
 .create_story_body button:hover, input[type="submit"]:hover {
     background-color: #4d6b82;
@@ -230,6 +231,7 @@ input {
     inset: 0;
     z-index: 1000;
     display: flex;
+    font-size: 18pt;
     align-items: center;
     justify-content: center;
     padding: 1rem;
@@ -340,11 +342,12 @@ input {
 
 .create-inline-btn {
     padding: 0.45rem 0.75rem;
-    background-color: #e9e9e9;
+    background-color: #bfd1e0;
     border: none;
     color: black;
     font: inherit;
     cursor: pointer;
+    border-radius: 10px;
 }
 
 .create-inline-btn:hover:not(:disabled) {
