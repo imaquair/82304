@@ -26,6 +26,11 @@
                 {% endfor %}
             {% endif %}
         </p>
+        {% if previous_recording and previous_recording.audio_file %}
+            <p class="previous-audio-label">Listen to the previous phrase</p>
+            <audio class="previous-recording-audio" controls preload="metadata" src="{{ previous_recording.audio_file.url }}"></audio>
+            <br><br>
+        {% endif %}
         {% if errors %}
         <ul class="form-errors">
             {% for err in errors %}

@@ -5,6 +5,13 @@ body {
     background-color: #f8f2ef;
 }
 
+audio::-webkit-media-controls-panel, audio {
+    width: 100%;
+    background-color: #bfd1e0;
+    border-radius: 30px;
+}
+
+
 .font {
   font-family: "Elms Sans", sans-serif;
   font-optical-sizing: auto;

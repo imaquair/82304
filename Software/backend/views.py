@@ -202,6 +202,7 @@ def add_to_story(request, pk):
                     "previous_transcript_segments": previous_transcript_segments_for_story(
                         story
                     ),
+                    "previous_recording": story.recordings.last(),
                 },
             )
 
@@ -238,6 +239,7 @@ def add_to_story(request, pk):
         {
             "story": story,
             "previous_transcript_segments": previous_transcript_segments_for_story(story),
+            "previous_recording": story.recordings.last(),
         },
     )
 
