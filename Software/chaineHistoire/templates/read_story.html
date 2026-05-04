@@ -16,9 +16,6 @@
                 <li class="{% if active_tab == 'read' %}is-active{% endif %}">
                     <a href="{% url 'read' story.pk %}?tab=read">Read</a>
                 </li>
-                <li class="{% if active_tab == 'listen' %}is-active{% endif %}">
-                    <a href="{% url 'read' story.pk %}?tab=listen">Listen</a>
-                </li>
                 <li>
                     <a href="#" onclick="window.print();">Print</a>
                 </li>
@@ -36,8 +33,6 @@
                     {{ recording.transcript_original }}<br><br>
                 {% endfor %}
                 </p>
-            {% else %}
-                <p>TODO: combine all audio files into one large audio and display</p>
             {% endif %}
         </div>
     </div>
