@@ -159,7 +159,7 @@ def get_story_library(request):
 
     annotated = Story.objects.annotate(recording_count=Count("recordings"))
     if tab == "completed":
-        stories = annotated.filter(recording_count__gte=1)
+        stories = annotated.filter(recording_count__gte=20)
     else:
         stories = annotated.filter(recording_count__lt=20)
 
