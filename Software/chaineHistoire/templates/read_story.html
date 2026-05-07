@@ -25,11 +25,6 @@
             {% if active_tab == 'read' %}
                 <p>
                 {% for recording in story.recordings.all %}
-                    {{ recording.transcript_english }}<br><br>
-                {% endfor %}
-                </p>
-                <p>
-                {% for recording in story.recordings.all %}
                     {{ recording.transcript_original }}<br><br>
                 {% endfor %}
                 </p>
