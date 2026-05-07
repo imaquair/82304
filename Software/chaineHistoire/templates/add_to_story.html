@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="{% static 'chaineHistoire/css/styles.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <link href="https://fonts.googleapis.com/css2?family=Abel&family=Elms+Sans:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
     <title>Chaine d'Histoires</title>
 </head>
 <body>
@@ -58,7 +59,7 @@
             </div>
             <audio id="playback" class="create-playback" controls playsinline hidden></audio>
             <br><br>
-            <textarea name="english_text" id="english_text" placeholder="Type your story, or record — transcribed text appears here when you end recording" rows="3" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
+            <textarea name="english_text" id="english_text" placeholder="Type your or record your story" rows="3" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
             <p>Choose exactly three keywords — click a word in the preview below, then enter its English translation.</p>
             <p id="draft-story-preview" class="previous_story_text draft-story-live" aria-live="off"></p>
             <p id="keyword-selection-status" class="keyword-selection-status" aria-live="polite"></p>
@@ -398,14 +399,23 @@
                 });
         }
 
-        var canRecord =
-            navigator.mediaDevices &&
-            navigator.mediaDevices.getUserMedia &&
-            window.MediaRecorder;
+        function recordingSupportIssue() {
+            if (!window.isSecureContext) {
+                return "Recording needs HTTPS (or localhost).";
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return "Microphone access APIs are unavailable in this browser.";
+            }
+            if (!window.MediaRecorder) {
+                return "This browser cannot record audio from the microphone.";
+            }
+            return null;
+        }
 
         btnRecord.addEventListener("click", function () {
-            if (!canRecord) {
-                alert("Recording is not supported in this browser.");
+            var supportIssue = recordingSupportIssue();
+            if (supportIssue) {
+                alert("Recording is not supported in this browser. " + supportIssue);
                 return;
             }
             recordControls.classList.remove("is-hidden");
@@ -413,6 +423,11 @@
         });
 
         btnStart.addEventListener("click", function () {
+            var supportIssue = recordingSupportIssue();
+            if (supportIssue) {
+                alert("Recording is not supported in this browser. " + supportIssue);
+                return;
+            }
             chunks = [];
             recordedBlob = null;
             audioFileInput.value = "";

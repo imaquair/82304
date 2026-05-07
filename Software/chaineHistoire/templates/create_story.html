@@ -378,14 +378,23 @@
                 });
         }
 
-        var canRecord =
-            navigator.mediaDevices &&
-            navigator.mediaDevices.getUserMedia &&
-            window.MediaRecorder;
+        function recordingSupportIssue() {
+            if (!window.isSecureContext) {
+                return "Recording needs HTTPS (or localhost).";
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return "Microphone access APIs are unavailable in this browser.";
+            }
+            if (!window.MediaRecorder) {
+                return "This browser cannot record audio from the microphone.";
+            }
+            return null;
+        }
 
         btnRecord.addEventListener("click", function () {
-            if (!canRecord) {
-                alert("Recording is not supported in this browser.");
+            var supportIssue = recordingSupportIssue();
+            if (supportIssue) {
+                alert("Recording is not supported in this browser. " + supportIssue);
                 return;
             }
             recordControls.classList.remove("is-hidden");
@@ -393,6 +402,11 @@
         });
 
         btnStart.addEventListener("click", function () {
+            var supportIssue = recordingSupportIssue();
+            if (supportIssue) {
+                alert("Recording is not supported in this browser. " + supportIssue);
+                return;
+            }
             chunks = [];
             recordedBlob = null;
             audioFileInput.value = "";
