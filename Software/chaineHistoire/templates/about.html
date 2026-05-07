@@ -6,22 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="{% static 'chaineHistoire/css/styles.css' %}">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=arrow_back" />
+    <link href="https://fonts.googleapis.com/css2?family=Abel&family=Elms+Sans:ital,wght@0,100..900;1,100..900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Quicksand:wght@300..700&family=Tajawal:wght@200;300;400;500;700;800;900&display=swap" rel="stylesheet">
     <title>Chaine d'Histoires</title>
 </head>
 <body>
-    <div class="about-body font">
+    <div class="about-body library-body font">
         <h1>About</h1>
-        <p>Welcome to La Chaine d'Histoires!</p>
-
-        <h2>How-To</h2>
-        <p>
-            Visit <a href="{% url 'library' %}">the story library</a> to view all
-            current stories. Each story lists the title and language of the last
-            phrase. Click on a story to add to it! 
-        </p>
-        <p>
-            
-        </p>
+        <nav class="library-nav">
+            <ul>
+                <li class="{% if active_tab == 'about' %}is-active{% endif %}">
+                    <a href="{% url 'about' %}?tab=about">About</a>
+                </li>
+                <li class="{% if active_tab == 'how-to' %}is-active{% endif %}">
+                    <a href="{% url 'about' %}?tab=how-to">How-To</a>
+                </li>
+                <li>
+                    <a href="{% url 'library' %}">Story Library</a>
+                </li>
+            </ul>
+        </nav>
+        {% if active_tab == 'about' %}
+            <h2>Histoires Déchaînées</h2>
+            <h4>A Multicultural Experience</h4>
+            <p>This project creates a participatory experience that invites and encourages 
+                members of the general public to interact with languages ​​they may not 
+                otherwise encounter in their daily lives. These languages ​​might include 
+                non-English native languages, languages people are learning, or even a 
+                language that is entirely new to them. Within the context of an American 
+                university campus, this project operates in an environment largely dominated 
+                by English, despite the fact that the majority of the student body is likely
+                 at least bilingual. Furthermore, current cultural and political trends have 
+                 led to calls for designating English as the sole official language of the 
+                 United States, exerting pressure to marginalize non-English languages ​and 
+                 push them out of the public sphere. Consequently, this project aims to 
+                 combat monolingualism and the hegemony of English by encouraging participants
+                  to engage in a collaborative act of storytelling and to inhabit a space 
+                  that is multilingual, interlingual, and inclusive.</p>
+        {% else %}
+            <h2>How-To</h2>
+            <ol>
+                <li> 
+                    <a href="{% url 'library' %}" style="text-decoration: underline;">Visit the Story Library</a> and select a story
+                    that you want to contribute to. The language of the last entry is displayed for each 
+                    story.
+                </li>
+                <li>
+                    Once you have chosen a story, you will see the entry from the previous story. 
+                    Click the highlighted keywords to view their English translation. If a recording 
+                    exists for the previous entry, it will be displayed as well.
+                </li>
+                <li>
+                    When you are ready to continue the story, start by enterring the language of your 
+                    entry. This does not have to be the same language as the previous entry. Type or record
+                    your story continuation in your chosen language. If you choose to record your entry,
+                    your recording will be transcribed and displayed in the text input area. Feel free to edit
+                    the transcription to ensure it matches your recording. 
+                </li>
+                <li>
+                    Once you have typed and/or recorded your entry, it will appear in the blue keyword selection
+                    region at the bottom of the page. Click on three words to translate them into English.
+                </li>
+                <li>
+                    Click Submit once you're done and come back later if you want to see the full finished story!
+                </li>
+            </ol>
+        {% endif %}
     </div>
 </body>
 </html>

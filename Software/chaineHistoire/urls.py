@@ -39,7 +39,7 @@ urlpatterns = [
     path("add/<int:pk>/", views.add_to_story, name="add"),
     path("transcribe-audio/", views.transcribe_audio, name="transcribe_audio"),
     path("read/<int:pk>/", views.read_story, name="read"),
-    path("about/", about, name="about"),
+    path("about/", views.show_about, name="about"),
 ]
 
 if settings.DEBUG:

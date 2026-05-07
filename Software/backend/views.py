@@ -174,6 +174,17 @@ def save_audio_recording(request, story_id):
         }
     )
 
+def show_about(request):
+    tab = request.GET.get("tab", "about")
+    if tab not in ("about", "how-to"):
+        tab = "about"
+
+    return render(
+        request,
+        "about.html",
+        {"active_tab": tab},
+    )
+
 def get_story_library(request):
     """In progress: fewer than 20 recordings. Completed: 20 or more."""
     tab = request.GET.get("tab", "in_progress")
