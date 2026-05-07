@@ -12,6 +12,9 @@
 <body>
     <div class="create_story_body font">
         <h1 class="font-family: 'Times New Roman', Times, serif;">Add to "{{ story.title }}"</h1>
+        {% if story.recordings.last.order == 19 %}
+            <p class="last-entry-warning">Your entry will be the last entry!</p>
+        {% endif %}
         <p class="previous_story_text previous-transcript-prose">
             {% if previous_transcript_segments is None %}
                 No previous text yet.

@@ -19,6 +19,12 @@ audio::-webkit-media-controls-panel, audio {
   font-style: normal;
 }
 
+.last-entry-warning {
+    background-color: #EDB7BC;
+    padding: 20px;
+    border-radius: 10px;
+}
+
 .about-body {
     padding: 2.5em;
 }
