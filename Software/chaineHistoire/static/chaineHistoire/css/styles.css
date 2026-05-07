@@ -422,7 +422,6 @@ input {
     clear: both;
     display: none;
     width: 100%;
-    max-width: 500px;
     margin-top: 0.75rem;
 }
 

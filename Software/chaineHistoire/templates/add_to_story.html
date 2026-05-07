@@ -58,7 +58,7 @@
             </div>
             <audio id="playback" class="create-playback" controls playsinline hidden></audio>
             <br><br>
-            <textarea name="english_text" id="english_text" placeholder="Type or speak your story (recording is transcribed here when your browser supports it)" rows="3" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
+            <textarea name="english_text" id="english_text" placeholder="Type your story, or record — transcribed text appears here when you end recording" rows="3" maxlength="5000">{{ english_text|default:'' }}</textarea><br><br>
             <p>Choose exactly three keywords — click a word in the preview below, then enter its English translation.</p>
             <p id="draft-story-preview" class="previous_story_text draft-story-live" aria-live="off"></p>
             <p id="keyword-selection-status" class="keyword-selection-status" aria-live="polite"></p>
@@ -103,7 +103,6 @@
         var recording_text = document.getElementById("recording_text");
         var englishText = document.getElementById("english_text");
         var draftPreview = document.getElementById("draft-story-preview");
-        var languageInput = document.getElementById("language");
         var keywordStatus = document.getElementById("keyword-selection-status");
         var keywordModal = document.getElementById("keyword-modal");
         var keywordModalWord = document.getElementById("keyword-modal-word");
@@ -305,114 +304,104 @@
         var mimeType = "audio/webm";
         var pendingFormSubmit = false;
 
-        var speechRecognition = null;
-        var endingSpeechSession = false;
-        var committedTranscript = "";
-        var recordingTextPrefix = "";
+        var transcribeUrl = "{% url 'transcribe_audio' %}";
 
-        var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        function resolveSpeechLang(raw) {
-            var s = (raw || "").trim().toLowerCase();
-            if (!s) {
-                return "en-US";
-            }
-            if (/^[a-z]{2}(-[a-z]{2})?$/i.test(s.replace(/_/g, "-"))) {
-                if (s.length === 2) {
-                    var r = { en: "US", fr: "FR", es: "ES", de: "DE", it: "IT", pt: "BR", nl: "NL", pl: "PL", ru: "RU", ja: "JP", ko: "KR", zh: "CN", ar: "SA", hi: "IN" };
-                    return s + "-" + (r[s] || s.toUpperCase());
-                }
-                return s;
-            }
-            var map = {
-                english: "en-US",
-                french: "fr-FR",
-                spanish: "es-ES",
-                german: "de-DE",
-                italian: "it-IT",
-                portuguese: "pt-BR",
-                dutch: "nl-NL",
-                polish: "pl-PL",
-                russian: "ru-RU",
-                japanese: "ja-JP",
-                chinese: "zh-CN",
-                korean: "ko-KR",
-                arabic: "ar-SA",
-                hindi: "hi-IN",
-            };
-            return map[s] || "en-US";
+        function recordingFilename() {
+            return mimeType.indexOf("mp4") !== -1 ? "recording.m4a" : "recording.webm";
         }
 
-        function stopSpeechRecognition() {
-            if (!speechRecognition) {
-                return;
-            }
-            endingSpeechSession = true;
-            try {
-                speechRecognition.stop();
-            } catch (err) {
-                /* ignore */
-            }
-            speechRecognition = null;
-        }
-
-        function applyTranscriptToTextarea(interim) {
-            var spacer = recordingTextPrefix && (committedTranscript || interim) ? " " : "";
-            englishText.value =
-                recordingTextPrefix + spacer + committedTranscript + (interim || "");
-            renderDraftPreview();
-        }
-
-        function startSpeechRecognition() {
-            if (!SpeechRecognitionCtor) {
-                return;
-            }
-            committedTranscript = "";
-            recordingTextPrefix = englishText.value;
-            speechRecognition = new SpeechRecognitionCtor();
-            speechRecognition.continuous = true;
-            speechRecognition.interimResults = true;
-            speechRecognition.lang = resolveSpeechLang(languageInput ? languageInput.value : "");
-
-            speechRecognition.onresult = function (event) {
-                var interim = "";
-                var i;
-                for (i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        committedTranscript += event.results[i][0].transcript;
-                    } else {
-                        interim += event.results[i][0].transcript;
+        function transcribeAfterRecording(blob, done) {
+            done = done || function () {};
+            recording_text.style.display = "block";
+            recording_text.textContent = "Transcribing…";
+            var fd = new FormData();
+            fd.append(
+                "csrfmiddlewaretoken",
+                form.querySelector("[name=csrfmiddlewaretoken]").value
+            );
+            fd.append("audio", blob, recordingFilename());
+            fetch(transcribeUrl, {
+                method: "POST",
+                body: fd,
+                credentials: "same-origin",
+            })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        return { response: response, data: data };
+                    });
+                })
+                .then(function (result) {
+                    recording_text.style.display = "none";
+                    var data = result.data || {};
+                    if (!result.response.ok) {
+                        if (data.error) {
+                            alert(data.error);
+                        }
+                        done();
+                        return;
                     }
-                }
-                applyTranscriptToTextarea(interim);
-            };
-
-            speechRecognition.onend = function () {
-                if (endingSpeechSession) {
-                    endingSpeechSession = false;
-                    return;
-                }
-                if (mediaRecorder && mediaRecorder.state === "recording" && speechRecognition) {
-                    try {
-                        speechRecognition.start();
-                    } catch (err) {
-                        /* InvalidStateError if already running */
+                    if (data.skipped && data.message) {
+                        console.info(data.message);
                     }
-                }
-            };
-
-            speechRecognition.onerror = function () {
-                /* Network errors or no-speech are common; keep recording audio */
-            };
-
-            try {
-                speechRecognition.start();
-            } catch (err) {
-                speechRecognition = null;
-            }
+                    var t = data.transcript ? String(data.transcript) : "";
+                    if (t) {
+                        keywordSelections = [];
+                        englishText.value = t;
+                        renderDraftPreview();
+                    }
+                    done();
+                })
+                .catch(function () {
+                    recording_text.style.display = "none";
+                    alert(
+                        "Could not transcribe audio. You can still type or edit your story."
+                    );
+                    done();
+                });
         }
 
-        var canRecord = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+        function submitViaFetch() {
+            var fd = new FormData(form);
+            fd.delete("audio");
+            fd.append("audio", recordedBlob, recordingFilename());
+            fetch(form.action, {
+                method: "POST",
+                body: fd,
+                credentials: "same-origin",
+                redirect: "follow",
+            })
+                .then(function (response) {
+                    return response.text().then(function (html) {
+                        if (!response.ok) {
+                            document.open();
+                            document.write(html);
+                            document.close();
+                            return;
+                        }
+                        var reqUrl = new URL(form.action, window.location.href);
+                        var resUrl = new URL(response.url);
+                        var navigatedAway =
+                            response.redirected ||
+                            resUrl.pathname !== reqUrl.pathname ||
+                            resUrl.search !== reqUrl.search;
+                        if (navigatedAway) {
+                            window.location.href = response.url;
+                            return;
+                        }
+                        document.open();
+                        document.write(html);
+                        document.close();
+                    });
+                })
+                .catch(function (err) {
+                    alert("Could not submit: " + (err.message || String(err)));
+                });
+        }
+
+        var canRecord =
+            navigator.mediaDevices &&
+            navigator.mediaDevices.getUserMedia &&
+            window.MediaRecorder;
 
         btnRecord.addEventListener("click", function () {
             if (!canRecord) {
@@ -426,8 +415,6 @@
         btnStart.addEventListener("click", function () {
             chunks = [];
             recordedBlob = null;
-            endingSpeechSession = false;
-            stopSpeechRecognition();
             audioFileInput.value = "";
             if (playbackObjectUrl) {
                 URL.revokeObjectURL(playbackObjectUrl);
@@ -444,16 +431,33 @@
                 mimeType = "audio/mp4";
             }
             navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
-                mediaRecorder = new MediaRecorder(stream, options);
+                try {
+                    mediaRecorder = new MediaRecorder(stream, options);
+                } catch (recErr) {
+                    stream.getTracks().forEach(function (t) {
+                        t.stop();
+                    });
+                    alert(
+                        "Recording failed to start: " +
+                            (recErr.message || String(recErr))
+                    );
+                    return;
+                }
                 mediaRecorder.ondataavailable = function (e) {
                     if (e.data && e.data.size > 0) {
                         chunks.push(e.data);
                     }
                 };
                 mediaRecorder.onstop = function () {
-                    stopSpeechRecognition();
-                    stream.getTracks().forEach(function (t) { t.stop(); });
-                    recordedBlob = new Blob(chunks, { type: mimeType });
+                    stream.getTracks().forEach(function (t) {
+                        t.stop();
+                    });
+                    var outType =
+                        mediaRecorder.mimeType && mediaRecorder.mimeType.indexOf("audio") === 0
+                            ? mediaRecorder.mimeType
+                            : mimeType;
+                    mimeType = outType;
+                    recordedBlob = new Blob(chunks, { type: outType });
                     if (playbackObjectUrl) {
                         URL.revokeObjectURL(playbackObjectUrl);
                     }
@@ -464,13 +468,15 @@
                     btnStart.disabled = false;
                     btnEnd.disabled = true;
                     recording_text.style.display = "none";
-                    if (pendingFormSubmit) {
-                        pendingFormSubmit = false;
-                        form.requestSubmit();
+                    function maybeSubmitPending() {
+                        if (pendingFormSubmit) {
+                            pendingFormSubmit = false;
+                            form.requestSubmit();
+                        }
                     }
+                    transcribeAfterRecording(recordedBlob, maybeSubmitPending);
                 };
-                mediaRecorder.start();
-                startSpeechRecognition();
+                mediaRecorder.start(250);
                 btnStart.disabled = true;
                 recording_text.style.display = "block";
                 btnEnd.disabled = false;
@@ -480,8 +486,14 @@
         });
 
         btnEnd.addEventListener("click", function () {
-            stopSpeechRecognition();
             if (mediaRecorder && mediaRecorder.state === "recording") {
+                if (typeof mediaRecorder.requestData === "function") {
+                    try {
+                        mediaRecorder.requestData();
+                    } catch (err) {
+                        /* ignore */
+                    }
+                }
                 mediaRecorder.stop();
             }
         });
@@ -490,7 +502,13 @@
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 e.preventDefault();
                 pendingFormSubmit = true;
-                stopSpeechRecognition();
+                if (typeof mediaRecorder.requestData === "function") {
+                    try {
+                        mediaRecorder.requestData();
+                    } catch (err) {
+                        /* ignore */
+                    }
+                }
                 mediaRecorder.stop();
                 return;
             }
@@ -506,15 +524,8 @@
             if (!recordedBlob) {
                 return;
             }
-            try {
-                var dt = new DataTransfer();
-                var ext = mimeType.indexOf("mp4") !== -1 ? "m4a" : "webm";
-                dt.items.add(new File([recordedBlob], "recording." + ext, { type: mimeType }));
-                audioFileInput.files = dt.files;
-            } catch (err) {
-                e.preventDefault();
-                alert("Could not attach the recording to the form. Try a different browser.");
-            }
+            e.preventDefault();
+            submitViaFetch();
         });
 
         englishText.addEventListener("input", renderDraftPreview);

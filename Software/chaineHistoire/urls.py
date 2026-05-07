@@ -37,6 +37,7 @@ urlpatterns = [
     path("create/", views.create_story, name="create"),
     path("library/", views.get_story_library, name="library"),
     path("add/<int:pk>/", views.add_to_story, name="add"),
+    path("transcribe-audio/", views.transcribe_audio, name="transcribe_audio"),
     path("read/<int:pk>/", views.read_story, name="read"),
     path("about/", about, name="about"),
 ]

@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
 
+from .assemblyai_transcribe import transcribe_uploaded_file
 from .models import Recording, Story, Keyword
 
 CREATE_GATE_SESSION_KEY = "create_story_access_granted"
@@ -39,6 +40,28 @@ def previous_transcript_segments_for_story(story):
         last_rec.transcript_english or "",
         last_rec.keywords.all(),
     )
+
+
+@require_POST
+def transcribe_audio(request):
+    """Transcribe a short uploaded clip after recording stops (AssemblyAI)."""
+    audio = request.FILES.get("audio")
+    if not audio:
+        return JsonResponse({"error": "No audio file."}, status=400)
+
+    ok, text, err = transcribe_uploaded_file(audio)
+    if not ok and err is None:
+        return JsonResponse(
+            {
+                "transcript": "",
+                "skipped": True,
+                "message": "Set ASSEMBLYAI_API_KEY to enable transcription after recording.",
+            }
+        )
+    if not ok:
+        return JsonResponse({"error": err or "Transcription failed.", "transcript": ""}, status=502)
+
+    return JsonResponse({"transcript": text or ""})
 
 
 @require_http_methods(["GET", "POST"])

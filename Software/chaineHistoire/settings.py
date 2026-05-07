@@ -136,3 +136,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # Gate for the create story page. Set this in your environment.
 CREATE_STORY_PASSWORD = os.getenv("CREATE_STORY_PASSWORD", "")
+
+# AssemblyAI — used when the user finishes recording (preview) if set.
+ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY", "")
+ASSEMBLYAI_BASE_URL = os.getenv("ASSEMBLYAI_BASE_URL", "")
