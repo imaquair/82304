@@ -1,1 +1,2 @@
 Django
+assemblyai>=0.36.0
